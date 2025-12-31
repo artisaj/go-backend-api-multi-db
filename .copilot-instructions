@@ -1,0 +1,11 @@
+Project guardrails for GitHub Copilot (GPT-5.1-Codex-Max):
+
+- Use Portuguese for documentation and comments when helpful to the team.
+- Favor Clean/Hexagonal Architecture with SOLID; respect layer boundaries (presentation -> application -> domain; infrastructure only via ports).
+- Keep secrets out of code. Env vars only; no AWS Secrets Manager for now (add TODO if needed).
+- Stack: Go 1.22+, chi para HTTP, zerolog para logging, mongo-driver para config store.
+- Prefer Go idioms: small pure functions, context propagation, explicit errors.
+- Default logging via structured logger; include correlation/request IDs.
+- Caching: query-hash + entity-version keys; TTL + event-driven invalidation; avoid oversized payloads.
+- Long-running queries: return query-id (job-id) immediately; client polls status endpoint.
+- Telemetry from day one: traces, metrics (latency, cache hit/miss, job duration), logs with context.

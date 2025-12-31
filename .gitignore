@@ -1,0 +1,14 @@
+bin/
+dist/
+build/
+coverage/
+tmp/
+vendor/
+.env
+.env.local
+.vscode/
+.idea/
+.DS_Store
+*.log
+*.out
+go.work
