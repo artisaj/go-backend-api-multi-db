@@ -11,39 +11,42 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 ## Configuração rápida
 1. Opcional: copie `.env.example` para `.env` e ajuste variáveis (porta, log, URIs).
 2. Suba os serviços com Docker Compose:
+
    ```sh
-docker-compose up -d
+   docker-compose up -d
    ```
+
    - Sobe MongoDB e a API em `localhost:8080`.
    - Mongo é iniciado com usuário `admin/admin123` e banco `api_database_config`.
 
 3. Cadastre um datasource na coleção `data_sources` do Mongo (no banco `api_database_config`). Exemplo para Postgres na máquina host:
+
    ```js
-db.data_sources.insertOne({
-  name: "main",
-  type: "postgres",
-  description: "Postgres principal",
-  connection: {
-    host: "host.docker.internal",
-    port: 5432,
-    user: "postgres",
-    password: "postgres",
-    database: "postgres",
-    sslMode: "disable"
-  },
-  capabilities: {
-    supportsJoins: true,
-    supportsTransactions: true,
-    maxDepthLimit: 0
-  },
-  limits: {
-    maxRows: 500,
-    queryTimeoutMs: 4000
-  },
-  version: 1,
-  createdAt: new Date(),
-  updatedAt: new Date()
-})
+   db.data_sources.insertOne({
+     name: "main",
+     type: "postgres",
+     description: "Postgres principal",
+     connection: {
+       host: "host.docker.internal",
+       port: 5432,
+       user: "postgres",
+       password: "postgres",
+       database: "postgres",
+       sslMode: "disable"
+     },
+     capabilities: {
+       supportsJoins: true,
+       supportsTransactions: true,
+       maxDepthLimit: 0
+     },
+     limits: {
+       maxRows: 500,
+       queryTimeoutMs: 4000
+     },
+     version: 1,
+     createdAt: new Date(),
+     updatedAt: new Date()
+   })
    ```
 
 ## Rodando sem Docker
