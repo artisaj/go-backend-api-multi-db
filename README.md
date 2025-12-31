@@ -98,3 +98,6 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 - Identificadores de tabela/coluna são validados (letras, números, underscore) e escapados para Postgres.
 - `limit` padrão é 100 e não passa de 500, ou do `maxRows` configurado no datasource.
 - Valores de UUID e `time` retornam formatados como string.
+
+## Licença
+MIT. Veja [LICENSE](LICENSE).
