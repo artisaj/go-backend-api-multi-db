@@ -105,6 +105,14 @@
             word-break: break-all;
             border: 1px solid #334155;
             color: #10b981;
+            cursor: pointer;
+            user-select: all;
+            transition: all 0.2s;
+        }
+
+        .key-value:hover {
+            border-color: #60a5fa;
+            box-shadow: 0 0 8px rgba(96, 165, 250, 0.2);
         }
 
         .actions {
@@ -283,7 +291,9 @@
                 return;
             }
 
-            const html = keys.map(key => `
+            const html = keys.map(key => {
+                const displayKey = key.key.substring(0, 8) + '...' + key.key.substring(key.key.length - 8);
+                return `
                 <div class="key-item">
                     <div class="key-item-header">
                         <div class="key-info">
@@ -297,9 +307,9 @@
                             <button class="btn btn-danger" onclick="deleteKey('${key.key}', '${escapeHtml(key.name)}')">Deletar</button>
                         </div>
                     </div>
-                    <div class="key-value" id="key-${key.key}">${key.key}</div>
+                    <div class="key-value" id="key-${key.key}" title="Clique para revelar chave completa" onclick="toggleKeyDisplay(this, '${key.key}')">${displayKey}</div>
                 </div>
-            `).join('');
+            `}).join('');
 
             document.getElementById('keysContainer').innerHTML = html;
         }
@@ -370,6 +380,17 @@
             }).catch(() => {
                 showAlert('Erro ao copiar chave', 'error');
             });
+        }
+
+        function toggleKeyDisplay(element, fullKey) {
+            if (element.textContent.includes('...')) {
+                element.textContent = fullKey;
+                element.style.color = '#ef4444';
+            } else {
+                const displayKey = fullKey.substring(0, 8) + '...' + fullKey.substring(fullKey.length - 8);
+                element.textContent = displayKey;
+                element.style.color = '#10b981';
+            }
         }
 
         function editKey(key) {

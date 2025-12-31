@@ -29,7 +29,7 @@ func (h *APIKeyHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, ak)
 }
 
-// ListKeys retorna todas as chaves (sem exposição das chaves)
+// ListKeys retorna todas as chaves com valores completos
 func (h *APIKeyHandler) ListKeys(w http.ResponseWriter, r *http.Request) {
 	keys, err := h.repo.List(r.Context())
 	if err != nil {
@@ -37,20 +37,10 @@ func (h *APIKeyHandler) ListKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ocultar o valor real das chaves na resposta
-	var safeKeys []map[string]interface{}
-	for _, k := range keys {
-		safeKeys = append(safeKeys, map[string]interface{}{
-			"key":         k.Key[:8] + "...",
-			"name":        k.Name,
-			"description": k.Description,
-			"createdAt":   k.CreatedAt,
-		})
-	}
-
+	// Retornar chaves completas (o frontend pode truncar para exibição se desejar)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	respondJSON(w, safeKeys)
+	respondJSON(w, keys)
 }
 
 // CreateKey cria uma nova chave
