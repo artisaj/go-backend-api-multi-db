@@ -67,7 +67,12 @@
         <h1>API Database Dashboard</h1>
         <p class="subtitle">Monitor datasources e métricas de queries</p>
         
-        <button class="refresh-btn" onclick="loadData()">Atualizar</button>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <button class="refresh-btn" onclick="loadData()">Atualizar</button>
+            <a href="/keys.html" style="text-decoration: none;">
+                <button class="refresh-btn" style="background: #10b981;">🔑 Gerenciar API Keys</button>
+            </a>
+        </div>
 
         <div class="grid">
             <div class="card">

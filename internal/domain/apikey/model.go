@@ -40,7 +40,11 @@ func (ak *APIKey) HasPermission(resource string) bool {
 	return false
 }
 
-// APIKeyRepository interface para buscar chaves.
+// APIKeyRepository interface para gerenciar chaves.
 type APIKeyRepository interface {
 	GetByKey(ctx context.Context, key string) (*APIKey, error)
+	List(ctx context.Context) ([]APIKey, error)
+	Create(ctx context.Context, ak *APIKey) error
+	Update(ctx context.Context, key string, ak *APIKey) error
+	Delete(ctx context.Context, key string) error
 }

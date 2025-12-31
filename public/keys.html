@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Keys - Gerenciador</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        h1 { font-size: 2rem; color: #60a5fa; }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-copy {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        .btn-copy:hover {
+            background: #059669;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .key-item {
+            background: #0f172a;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .key-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .key-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            color: #f1f5f9;
+        }
+
+        .key-info p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .key-value {
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+            word-break: break-all;
+            border: 1px solid #334155;
+            color: #10b981;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            color: #60a5fa;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #334155;
+            border-radius: 0.375rem;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #064e3b;
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #7f1d1d;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            color: #94a3b8;
+            padding: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3b82f6;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <a href="/" class="back-link">← Voltar ao Dashboard</a>
+                <h1>Gerenciar API Keys</h1>
+            </div>
+            <button class="btn btn-primary" id="newKeyBtn">+ Nova Chave</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div id="keysContainer" class="loading">Carregando chaves...</div>
+    </div>
+
+    <!-- Modal para criar/editar chave -->
+    <div id="keyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Nova Chave API</div>
+            <form id="keyForm">
+                <div class="form-group">
+                    <label for="keyName">Nome da Aplicação *</label>
+                    <input type="text" id="keyName" name="name" placeholder="Ex: Mobile App, Backend Service" required>
+                </div>
+                <div class="form-group">
+                    <label for="keyDescription">Descrição</label>
+                    <textarea id="keyDescription" name="description" placeholder="Descreva o propósito desta chave..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Chave</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api-keys';
+
+        async function loadKeys() {
+            try {
+                const response = await fetch(API_BASE);
+                if (!response.ok) throw new Error('Falha ao carregar chaves');
+                
+                const keys = await response.json() || [];
+                renderKeys(keys);
+            } catch (error) {
+                showAlert('Erro ao carregar chaves: ' + error.message, 'error');
+                document.getElementById('keysContainer').innerHTML = '<div class="empty-state">Erro ao carregar chaves</div>';
+            }
+        }
+
+        function renderKeys(keys) {
+            if (!keys || keys.length === 0) {
+                document.getElementById('keysContainer').innerHTML = '<div class="empty-state">Nenhuma chave criada ainda. Clique em "+ Nova Chave" para criar uma.</div>';
+                return;
+            }
+
+            const html = keys.map(key => `
+                <div class="key-item">
+                    <div class="key-item-header">
+                        <div class="key-info">
+                            <h3>${escapeHtml(key.name)}</h3>
+                            ${key.description ? `<p>${escapeHtml(key.description)}</p>` : ''}
+                            <p style="font-size: 0.75rem; margin-top: 0.5rem;">Criada em: ${new Date(key.createdAt).toLocaleString('pt-BR')}</p>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-copy" onclick="copyKey('${key.key}')">Copiar</button>
+                            <button class="btn btn-secondary" onclick="editKey('${key.key}')">Editar</button>
+                            <button class="btn btn-danger" onclick="deleteKey('${key.key}', '${escapeHtml(key.name)}')">Deletar</button>
+                        </div>
+                    </div>
+                    <div class="key-value" id="key-${key.key}">${key.key}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('keysContainer').innerHTML = html;
+        }
+
+        async function createKey(name, description) {
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        description,
+                        permissions: []
+                    })
+                });
+
+                if (!response.ok) throw new Error('Falha ao criar chave');
+                
+                const newKey = await response.json();
+                showAlert(`Chave criada com sucesso: ${newKey.key}`, 'success');
+                closeModal();
+                loadKeys();
+            } catch (error) {
+                showAlert('Erro ao criar chave: ' + error.message, 'error');
+            }
+        }
+
+        async function updateKey(key, name, description) {
+            try {
+                const response = await fetch(`${API_BASE}/${key}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description })
+                });
+
+                if (!response.ok) throw new Error('Falha ao atualizar chave');
+                
+                showAlert('Chave atualizada com sucesso', 'success');
+                closeModal();
+                loadKeys();
+            } catch (error) {
+                showAlert('Erro ao atualizar chave: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteKey(key, name) {
+            if (!confirm(`Tem certeza que deseja deletar a chave "${name}"? Esta ação é irreversível.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/${key}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Falha ao deletar chave');
+                
+                showAlert('Chave deletada com sucesso', 'success');
+                loadKeys();
+            } catch (error) {
+                showAlert('Erro ao deletar chave: ' + error.message, 'error');
+            }
+        }
+
+        function copyKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                showAlert('Chave copiada para clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Erro ao copiar chave', 'error');
+            });
+        }
+
+        function editKey(key) {
+            // Implementar edição de chaves (por enquanto, apenas aviso)
+            showAlert('Edição de descrição ainda em desenvolvimento', 'error');
+        }
+
+        function openModal(title = 'Nova Chave API') {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('keyForm').reset();
+            document.getElementById('keyModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('keyModal').classList.remove('active');
+        }
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            container.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Event listeners
+        document.getElementById('newKeyBtn').addEventListener('click', () => openModal());
+        document.getElementById('keyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('keyName').value.trim();
+            const description = document.getElementById('keyDescription').value.trim();
+            if (name) {
+                createKey(name, description);
+            }
+        });
+
+        // Click outside modal to close
+        document.getElementById('keyModal').addEventListener('click', (e) => {
+            if (e.target.id === 'keyModal') closeModal();
+        });
+
+        // Load keys on page load
+        loadKeys();
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ import (
 	"api-database/internal/domain/apikey"
 	"api-database/internal/domain/datasource"
 	httpmiddleware "api-database/internal/presentation/http/middleware"
+	"api-database/internal/presentation/http/handlers"
 	"api-database/internal/telemetry"
 )
 
@@ -75,10 +76,14 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 		r.Post("/data/{source}/{table}", dataHandler.HandleQuery)
 	}
 
-	// API Key endpoint
+	// API Key CRUD endpoints
 	if akRepo != nil {
-		akHandler := NewAPIKeyHandler()
-		r.Get("/api-keys/me", akHandler.HandleGetMe)
+		akHandler := handlers.NewAPIKeyHandler(akRepo)
+		r.Get("/api-keys/me", akHandler.GetMe)
+		r.Get("/api-keys", akHandler.ListKeys)
+		r.Post("/api-keys", akHandler.CreateKey)
+		r.Put("/api-keys/{key}", akHandler.UpdateKey)
+		r.Delete("/api-keys/{key}", akHandler.DeleteKey)
 	}
 
 	// Servir dashboard
