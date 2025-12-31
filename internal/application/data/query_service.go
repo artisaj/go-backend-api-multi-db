@@ -2,12 +2,13 @@ package data
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
+	"api-database/internal/domain"
 	"api-database/internal/domain/datasource"
 	"api-database/internal/infrastructure/postgres"
 )
@@ -68,31 +69,31 @@ const defaultMaxLimit = 500
 
 func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string, req QueryRequest) (*QueryResponse, error) {
 	if !tableNameRegex.MatchString(table) {
-		return nil, fmt.Errorf("invalid table name")
+		return nil, domain.NewAppError(domain.ErrInvalidTable, "invalid table name", http.StatusBadRequest)
 	}
 	if req.Schema != "" && !tableNameRegex.MatchString(req.Schema) {
-		return nil, fmt.Errorf("invalid schema name")
+		return nil, domain.NewAppError(domain.ErrInvalidSchema, "invalid schema name", http.StatusBadRequest)
 	}
 
 	ds, err := s.repo.GetByName(ctx, sourceName)
 	if err != nil {
-		return nil, err
+		return nil, domain.NewAppError(domain.ErrDataSourceNotFound, "datasource not found", http.StatusNotFound)
 	}
 	if ds.Type != "postgres" {
-		return nil, errors.New("only postgres is supported in this prototype")
+		return nil, domain.NewAppError(domain.ErrUnsupportedType, "only postgres is supported", http.StatusBadRequest)
 	}
 
 	// Validar colunas bloqueadas em filter
 	for col := range req.Filter {
 		if isColumnBlocked(table, col, ds.BlockedColumns) {
-			return nil, fmt.Errorf("column blocked: %s", col)
+			return nil, domain.NewAppError(domain.ErrColumnBlocked, fmt.Sprintf("column blocked: %s", col), http.StatusForbidden)
 		}
 	}
 
 	// Validar colunas bloqueadas em orderBy
 	for _, o := range req.OrderBy {
 		if isColumnBlocked(table, o.Field, ds.BlockedColumns) {
-			return nil, fmt.Errorf("column blocked: %s", o.Field)
+			return nil, domain.NewAppError(domain.ErrColumnBlocked, fmt.Sprintf("column blocked: %s", o.Field), http.StatusForbidden)
 		}
 	}
 

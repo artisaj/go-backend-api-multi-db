@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Database - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #60a5fa; }
+        .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .card h2 { font-size: 1.25rem; margin-bottom: 1rem; color: #60a5fa; }
+        .datasource-item {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #10b981;
+        }
+        .datasource-item h3 { font-size: 1rem; margin-bottom: 0.25rem; color: #f1f5f9; }
+        .datasource-item p { font-size: 0.875rem; color: #94a3b8; }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        .metric-row:last-child { border-bottom: none; }
+        .metric-label { color: #94a3b8; }
+        .metric-value {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        .metric-value.success { color: #10b981; }
+        .metric-value.error { color: #ef4444; }
+        .status { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: inline-block; }
+        .status.online { background: #064e3b; color: #10b981; }
+        .status.offline { background: #7f1d1d; color: #ef4444; }
+        .loading { text-align: center; padding: 2rem; color: #94a3b8; }
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .refresh-btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API Database Dashboard</h1>
+        <p class="subtitle">Monitor datasources e métricas de queries</p>
+        
+        <button class="refresh-btn" onclick="loadData()">Atualizar</button>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Datasources</h2>
+                <div id="datasources" class="loading">Carregando...</div>
+            </div>
+
+            <div class="card">
+                <h2>Métricas de Queries</h2>
+                <div id="metrics" class="loading">Carregando...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDatasources() {
+            try {
+                const response = await fetch('/datasources');
+                const data = await response.json();
+                
+                const container = document.getElementById('datasources');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8;">Nenhum datasource configurado</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(ds => `
+                    <div class="datasource-item">
+                        <h3>${ds.name} <span class="status online">online</span></h3>
+                        <p><strong>Tipo:</strong> ${ds.type}</p>
+                        <p>${ds.description || 'Sem descrição'}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('datasources').innerHTML = 
+                    '<p style="color: #ef4444;">Erro ao carregar datasources</p>';
+            }
+        }
+
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/metrics');
+                const data = await response.json();
+                
+                const container = document.getElementById('metrics');
+                
+                if (!data.summary || data.summary.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8;">Nenhuma query executada ainda</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.summary.map(m => `
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="color: #f1f5f9; margin-bottom: 0.75rem;">${m.dataSource}</h3>
+                        <div class="metric-row">
+                            <span class="metric-label">Total de Queries</span>
+                            <span class="metric-value">${m.totalQueries}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Sucesso</span>
+                            <span class="metric-value success">${m.successCount}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Erros</span>
+                            <span class="metric-value error">${m.errorCount}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Latência Média</span>
+                            <span class="metric-value">${m.avgLatencyMs}ms</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Latência P95</span>
+                            <span class="metric-value">${m.p95LatencyMs}ms</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Total de Linhas</span>
+                            <span class="metric-value">${m.totalRows.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('metrics').innerHTML = 
+                    '<p style="color: #ef4444;">Erro ao carregar métricas</p>';
+            }
+        }
+
+        function loadData() {
+            loadDatasources();
+            loadMetrics();
+        }
+
+        // Carregar dados ao iniciar
+        loadData();
+        
+        // Auto-refresh a cada 10 segundos
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>

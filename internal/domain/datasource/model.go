@@ -44,4 +44,5 @@ type Limits struct {
 // DataSourceRepository interface para buscar configurações.
 type DataSourceRepository interface {
 	GetByName(ctx context.Context, name string) (*DataSource, error)
+	ListAll(ctx context.Context) ([]*DataSource, error)
 }

@@ -35,9 +35,10 @@ func main() {
 
 	dsRepo := mongo.NewDataSourceRepository(mongoClient, cfg.Mongo.DBName)
 	queryService := data.NewQueryService(dsRepo)
-	dataHandler := httpserver.NewDataHandler(queryService)
+	metrics := telemetry.NewMetrics(1000)
+	dataHandler := httpserver.NewDataHandler(queryService, metrics)
 
-	router := httpserver.NewRouter(cfg, logger, dataHandler)
+	router := httpserver.NewRouter(cfg, logger, dataHandler, dsRepo, metrics)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

@@ -17,6 +17,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 COPY --from=builder /app/api-database .
+COPY --from=builder /app/public ./public
 
 EXPOSE 8080
 

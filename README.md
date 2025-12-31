@@ -2,6 +2,8 @@
 
 API HTTP simples que expõe consultas read-only em Postgres a partir de configurações guardadas no MongoDB. Útil para centralizar acesso a dados de múltiplas fontes com validação básica de filtros, ordenação e limites.
 
+![Dashboard](docs/dashboard.png)
+
 ## Requisitos
 - Go 1.22+
 - Docker e Docker Compose
@@ -60,7 +62,10 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
   ```
 
 ## Endpoints
+- `GET /` — dashboard de monitoramento (datasources e métricas).
 - `GET /health` — checagem simples.
+- `GET /metrics` — métricas agregadas de queries (JSON).
+- `GET /datasources` — lista datasources configurados.
 - `POST /data/{source}/{table}` — executa SELECT com filtros e ordenação.
 
 ### Corpo da requisição
@@ -99,6 +104,16 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 - Identificadores de tabela/coluna são validados (letras, números, underscore) e escapados para Postgres.
 - `limit` padrão é 100 e não passa de 500, ou do `maxRows` configurado no datasource.
 - Valores de UUID e `time` retornam formatados como string.
+- Colunas bloqueadas via `blockedColumns` no datasource são removidas da resposta e não podem ser usadas em filtros/ordenação.
+- Erros retornam JSON estruturado com `code`, `message` e `details` (opcional).
+
+## Testes
+```sh
+go test ./internal/... -v
+```
+
+## Dashboard
+Acesse `http://localhost:8080/` para visualizar datasources conectados e métricas de queries em tempo real.
 
 ## Licença
 MIT. Veja [LICENSE](LICENSE).

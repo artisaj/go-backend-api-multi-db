@@ -33,3 +33,19 @@ func (r *DataSourceRepositoryMongo) GetByName(ctx context.Context, name string) 
 	}
 	return &ds, nil
 }
+
+// ListAll retorna todos os datasources.
+func (r *DataSourceRepositoryMongo) ListAll(ctx context.Context) ([]*datasource.DataSource, error) {
+	col := r.client.Database(r.dbName).Collection(dataSourcesCollection)
+	cursor, err := col.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var sources []*datasource.DataSource
+	if err = cursor.All(ctx, &sources); err != nil {
+		return nil, err
+	}
+	return sources, nil
+}

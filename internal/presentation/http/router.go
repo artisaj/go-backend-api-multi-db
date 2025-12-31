@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -9,11 +10,13 @@ import (
 	"github.com/rs/zerolog"
 
 	"api-database/internal/config"
+	"api-database/internal/domain/datasource"
 	httpmiddleware "api-database/internal/presentation/http/middleware"
+	"api-database/internal/telemetry"
 )
 
 // NewRouter configura middlewares base e rotas públicas.
-func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandler) *chi.Mux {
+func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandler, dsRepo datasource.DataSourceRepository, metrics *telemetry.Metrics) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -27,9 +30,49 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 		_, _ = w.Write([]byte(`{"status":"ok","env":"` + cfg.Env + `"}`))
 	})
 
+	// Métricas endpoint
+	if metrics != nil {
+		r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"summary": metrics.GetSummary(),
+				"total":   len(metrics.GetMetrics()),
+			})
+		})
+	}
+
+	// Datasources endpoint
+	if dsRepo != nil {
+		r.Get("/datasources", func(w http.ResponseWriter, r *http.Request) {
+			sources, err := dsRepo.ListAll(r.Context())
+			w.Header().Set("Content-Type", "application/json")
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{"error": "failed to list datasources"})
+				return
+			}
+			// Retornar apenas name, type, description (não exposar connection details)
+			type SafeDS struct {
+				Name        string `json:"name"`
+				Type        string `json:"type"`
+				Description string `json:"description"`
+			}
+			safe := make([]SafeDS, len(sources))
+			for i, s := range sources {
+				safe[i] = SafeDS{Name: s.Name, Type: s.Type, Description: s.Description}
+			}
+			json.NewEncoder(w).Encode(safe)
+		})
+	}
+
 	if dataHandler != nil {
 		r.Post("/data/{source}/{table}", dataHandler.HandleQuery)
 	}
+
+	// Servir dashboard
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/index.html")
+	})
 
 	return r
 }
