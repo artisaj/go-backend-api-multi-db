@@ -53,9 +53,10 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 1. Garanta Mongo e Postgres rodando.
 2. Exporte as variáveis de ambiente necessárias (veja `.env.example`).
 3. Execute:
-   ```sh
-go run ./cmd/api
-   ```
+
+  ```sh
+  go run ./cmd/api
+  ```
 
 ## Endpoints
 - `GET /health` — checagem simples.
