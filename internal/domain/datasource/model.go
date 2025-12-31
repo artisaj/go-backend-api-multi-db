@@ -4,17 +4,18 @@ import "context"
 
 // DataSource representa a configuração de uma fonte de dados.
 type DataSource struct {
-	Name         string         `bson:"name" json:"name"`
-	Type         string         `bson:"type" json:"type"`
-	Description  string         `bson:"description" json:"description"`
-	Connection   Connection     `bson:"connection" json:"connection"`
-	Capabilities Capabilities   `bson:"capabilities" json:"capabilities"`
-	Limits       Limits         `bson:"limits" json:"limits"`
-	Version      int            `bson:"version" json:"version"`
-	CreatedAt    interface{}    `bson:"createdAt" json:"createdAt"`
-	UpdatedAt    interface{}    `bson:"updatedAt" json:"updatedAt"`
-	Raw          map[string]any `bson:"-" json:"-"`
-	Extra        map[string]any `bson:",inline" json:"-"`
+	Name           string         `bson:"name" json:"name"`
+	Type           string         `bson:"type" json:"type"`
+	Description    string         `bson:"description" json:"description"`
+	Connection     Connection     `bson:"connection" json:"connection"`
+	Capabilities   Capabilities   `bson:"capabilities" json:"capabilities"`
+	Limits         Limits         `bson:"limits" json:"limits"`
+	BlockedColumns []string       `bson:"blockedColumns" json:"blockedColumns"`
+	Version        int            `bson:"version" json:"version"`
+	CreatedAt      interface{}    `bson:"createdAt" json:"createdAt"`
+	UpdatedAt      interface{}    `bson:"updatedAt" json:"updatedAt"`
+	Raw            map[string]any `bson:"-" json:"-"`
+	Extra          map[string]any `bson:",inline" json:"-"`
 }
 
 // Connection contém parâmetros de conexão.

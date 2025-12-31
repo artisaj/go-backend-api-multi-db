@@ -43,6 +43,7 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
        maxRows: 500,
        queryTimeoutMs: 4000
      },
+     blockedColumns: ["User.passwordHash"],
      version: 1,
      createdAt: new Date(),
      updatedAt: new Date()

@@ -82,6 +82,20 @@ func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string,
 		return nil, errors.New("only postgres is supported in this prototype")
 	}
 
+	// Validar colunas bloqueadas em filter
+	for col := range req.Filter {
+		if isColumnBlocked(table, col, ds.BlockedColumns) {
+			return nil, fmt.Errorf("column blocked: %s", col)
+		}
+	}
+
+	// Validar colunas bloqueadas em orderBy
+	for _, o := range req.OrderBy {
+		if isColumnBlocked(table, o.Field, ds.BlockedColumns) {
+			return nil, fmt.Errorf("column blocked: %s", o.Field)
+		}
+	}
+
 	limit := req.Limit
 	if limit <= 0 {
 		limit = 100
@@ -124,6 +138,16 @@ func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string,
 		return nil, err
 	}
 	took := time.Since(start).Milliseconds()
+
+	// Remover colunas bloqueadas da resposta
+	for i := range rows {
+		for _, blocked := range ds.BlockedColumns {
+			parts := strings.SplitN(blocked, ".", 2)
+			if len(parts) == 2 && strings.EqualFold(parts[0], table) {
+				delete(rows[i], parts[1])
+			}
+		}
+	}
 
 	var totalPtr *int64
 	if req.CountTotal {
@@ -214,4 +238,15 @@ func buildOrder(order []OrderField) string {
 		return ""
 	}
 	return "ORDER BY " + strings.Join(clauses, ", ")
+}
+
+// isColumnBlocked verifica se table.column está na lista de bloqueados
+func isColumnBlocked(table, column string, blocked []string) bool {
+	fullCol := strings.ToLower(fmt.Sprintf("%s.%s", table, column))
+	for _, b := range blocked {
+		if strings.ToLower(b) == fullCol {
+			return true
+		}
+	}
+	return false
 }
