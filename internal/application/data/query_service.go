@@ -30,6 +30,7 @@ type QueryRequest struct {
 	CountTotal bool                   `json:"countTotal"`
 	OrderBy    []OrderField           `json:"orderBy"`
 	Filter     map[string]FilterField `json:"filter"`
+	Fields     []string               `json:"fields"` // Colunas a retornar; se vazio, SELECT *
 }
 
 // QueryResponse retorna dados e metadados simples.
@@ -113,6 +114,16 @@ func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string,
 		offset = 0
 	}
 
+	// Validar fields contra blockedColumns
+	for _, field := range req.Fields {
+		if !columnRegex.MatchString(field) {
+			return nil, domain.NewAppError(domain.ErrInvalidInput, fmt.Sprintf("invalid column name: %s", field), http.StatusBadRequest)
+		}
+		if isColumnBlocked(table, field, ds.BlockedColumns) {
+			return nil, domain.NewAppError(domain.ErrColumnBlocked, fmt.Sprintf("column blocked: %s", field), http.StatusForbidden)
+		}
+	}
+
 	conn, err := postgres.NewConnector(ctx, ds.Connection.Host, ds.Connection.Port, ds.Connection.User, ds.Connection.Password, ds.Connection.Database, ds.Connection.SSLMode)
 	if err != nil {
 		return nil, err
@@ -124,6 +135,18 @@ func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string,
 		fullTable = fmt.Sprintf("%s.%s", quoteIdent(req.Schema), quoteIdent(table))
 	}
 
+	// Construir SELECT com fields ou *
+	var selectClause string
+	if len(req.Fields) > 0 {
+		cols := make([]string, len(req.Fields))
+		for i, f := range req.Fields {
+			cols[i] = quoteIdent(f)
+		}
+		selectClause = strings.Join(cols, ", ")
+	} else {
+		selectClause = "*"
+	}
+
 	whereClause, params := buildWhere(req.Filter)
 	orderClause := buildOrder(req.OrderBy)
 
@@ -131,7 +154,7 @@ func (s *QueryService) QueryTable(ctx context.Context, sourceName, table string,
 	params = append(params, limit)
 	params = append(params, offset)
 
-	query := fmt.Sprintf("SELECT * FROM %s %s %s LIMIT $%d OFFSET $%d", fullTable, whereClause, orderClause, paramIdx, paramIdx+1)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s LIMIT $%d OFFSET $%d", selectClause, fullTable, whereClause, orderClause, paramIdx, paramIdx+1)
 
 	start := time.Now()
 	rows, err := conn.Query(ctx, query, params...)

@@ -9,7 +9,7 @@ import (
 
 func TestAppError(t *testing.T) {
 	err := NewAppError(ErrInvalidTable, "invalid table name", http.StatusBadRequest)
-	
+
 	assert.Equal(t, ErrInvalidTable, err.Code)
 	assert.Equal(t, "invalid table name", err.Message)
 	assert.Equal(t, http.StatusBadRequest, err.Status())
@@ -22,7 +22,7 @@ func TestAppErrorWithDetails(t *testing.T) {
 			"column": "passwordHash",
 			"table":  "User",
 		})
-	
+
 	assert.NotNil(t, err.Details)
 	assert.Equal(t, "passwordHash", err.Details["column"])
 }
@@ -30,7 +30,7 @@ func TestAppErrorWithDetails(t *testing.T) {
 func TestMapErrorToHTTP(t *testing.T) {
 	appErr := NewAppError(ErrDataSourceNotFound, "not found", http.StatusNotFound)
 	status, mappedErr := MapErrorToHTTP(appErr)
-	
+
 	assert.Equal(t, http.StatusNotFound, status)
 	assert.Equal(t, appErr, mappedErr)
 }
@@ -38,7 +38,7 @@ func TestMapErrorToHTTP(t *testing.T) {
 func TestMapErrorToHTTP_GenericError(t *testing.T) {
 	genericErr := assert.AnError
 	status, mappedErr := MapErrorToHTTP(genericErr)
-	
+
 	assert.Equal(t, http.StatusInternalServerError, status)
 	assert.Equal(t, ErrInternal, mappedErr.Code)
 }

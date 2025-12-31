@@ -1,9 +1,10 @@
 module api-database
 
-go 1.23
+go 1.22
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.33.0
@@ -14,6 +15,8 @@ require (
 replace golang.org/x/sync => golang.org/x/sync v0.6.0
 
 replace golang.org/x/text => golang.org/x/text v0.14.0
+
+replace github.com/rogpeppe/go-internal => github.com/rogpeppe/go-internal v1.12.0
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

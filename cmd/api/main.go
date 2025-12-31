@@ -34,11 +34,12 @@ func main() {
 	}()
 
 	dsRepo := mongo.NewDataSourceRepository(mongoClient, cfg.Mongo.DBName)
+	akRepo := mongo.NewAPIKeyRepository(mongoClient, cfg.Mongo.DBName)
 	queryService := data.NewQueryService(dsRepo)
 	metrics := telemetry.NewMetrics(1000)
 	dataHandler := httpserver.NewDataHandler(queryService, metrics)
 
-	router := httpserver.NewRouter(cfg, logger, dataHandler, dsRepo, metrics)
+	router := httpserver.NewRouter(cfg, logger, dataHandler, dsRepo, metrics, akRepo)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

@@ -10,13 +10,14 @@ import (
 	"github.com/rs/zerolog"
 
 	"api-database/internal/config"
+	"api-database/internal/domain/apikey"
 	"api-database/internal/domain/datasource"
 	httpmiddleware "api-database/internal/presentation/http/middleware"
 	"api-database/internal/telemetry"
 )
 
 // NewRouter configura middlewares base e rotas públicas.
-func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandler, dsRepo datasource.DataSourceRepository, metrics *telemetry.Metrics) *chi.Mux {
+func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandler, dsRepo datasource.DataSourceRepository, metrics *telemetry.Metrics, akRepo apikey.APIKeyRepository) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -24,6 +25,11 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(time.Duration(cfg.Thresholds.QueryTimeoutMs) * time.Millisecond))
 	r.Use(httpmiddleware.Logging(logger))
+
+	// Auth middleware (opcional: requer X-API-Key header)
+	if akRepo != nil {
+		r.Use(httpmiddleware.AuthMiddleware(akRepo))
+	}
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -67,6 +73,12 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 
 	if dataHandler != nil {
 		r.Post("/data/{source}/{table}", dataHandler.HandleQuery)
+	}
+
+	// API Key endpoint
+	if akRepo != nil {
+		akHandler := NewAPIKeyHandler()
+		r.Get("/api-keys/me", akHandler.HandleGetMe)
 	}
 
 	// Servir dashboard
