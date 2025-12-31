@@ -86,9 +86,19 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 		r.Delete("/api-keys/{key}", akHandler.DeleteKey)
 	}
 
-	// Servir dashboard
+	// Servir dashboard e arquivos estáticos
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/index.html")
+	})
+	
+	// Servir arquivos estáticos (*.html, *.js, etc)
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "/" {
+			http.ServeFile(w, r, "public/index.html")
+			return
+		}
+		http.ServeFile(w, r, "public"+path)
 	})
 
 	return r

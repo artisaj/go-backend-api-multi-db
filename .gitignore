@@ -12,3 +12,6 @@ vendor/
 *.log
 *.out
 go.work
+
+api-database
+api.exe
