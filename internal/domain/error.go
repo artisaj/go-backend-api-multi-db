@@ -14,6 +14,7 @@ const (
 	ErrUnsupportedType    ErrorCode = "UNSUPPORTED_TYPE"
 	ErrQueryFailed        ErrorCode = "QUERY_FAILED"
 	ErrInternal           ErrorCode = "INTERNAL_ERROR"
+	ErrNotFound           ErrorCode = "NOT_FOUND"
 )
 
 // AppError representa um erro estruturado da aplicação.

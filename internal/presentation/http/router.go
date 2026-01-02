@@ -12,8 +12,8 @@ import (
 	"api-database/internal/config"
 	"api-database/internal/domain/apikey"
 	"api-database/internal/domain/datasource"
-	httpmiddleware "api-database/internal/presentation/http/middleware"
 	"api-database/internal/presentation/http/handlers"
+	httpmiddleware "api-database/internal/presentation/http/middleware"
 	"api-database/internal/telemetry"
 )
 
@@ -73,7 +73,12 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 	}
 
 	if dataHandler != nil {
+		// Legacy endpoint
 		r.Post("/data/{source}/{table}", dataHandler.HandleQuery)
+		// Async-capable endpoint
+		r.Post("/queries/{source}/{table}", dataHandler.HandleQuery)
+		r.Get("/queries/{jobID}", dataHandler.HandleJobStatus)
+		r.Get("/queries/hash/{hash}", dataHandler.HandleJobsByHash)
 	}
 
 	// API Key CRUD endpoints
@@ -90,7 +95,7 @@ func NewRouter(cfg config.Config, logger zerolog.Logger, dataHandler *DataHandle
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/index.html")
 	})
-	
+
 	// Servir arquivos estáticos (*.html, *.js, etc)
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path

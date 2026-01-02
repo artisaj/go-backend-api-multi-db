@@ -7,12 +7,15 @@ import (
 
 // QueryMetric rastreia uma query executada.
 type QueryMetric struct {
-	DataSource string
-	Table      string
-	Status     string // "success", "error"
-	Latency    int64  // ms
-	Rows       int
-	Timestamp  time.Time
+	DataSource  string
+	Table       string
+	Status      string // "success", "error"
+	Latency     int64  // ms
+	Rows        int
+	JobID       string
+	PayloadHash string
+	APIKey      string
+	Timestamp   time.Time
 }
 
 // Metrics coleta métricas de queries.

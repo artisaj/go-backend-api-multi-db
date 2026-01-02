@@ -12,6 +12,7 @@ import (
 	"api-database/internal/application/data"
 	"api-database/internal/config"
 	"api-database/internal/infrastructure/mongo"
+	"api-database/internal/infrastructure/rabbitmq"
 	httpserver "api-database/internal/presentation/http"
 	"api-database/internal/telemetry"
 )
@@ -33,13 +34,26 @@ func main() {
 		}
 	}()
 
+	rabbitClient, err := rabbitmq.New(ctx, cfg.RabbitMQ.URL, cfg.RabbitMQ.QueryQueue)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to connect to RabbitMQ")
+	}
+	defer rabbitClient.Close()
+
 	dsRepo := mongo.NewDataSourceRepository(mongoClient, cfg.Mongo.DBName)
 	akRepo := mongo.NewAPIKeyRepository(mongoClient, cfg.Mongo.DBName)
+	jobsRepo := mongo.NewJobRepository(mongoClient, cfg.Mongo.DBName)
 	queryService := data.NewQueryService(dsRepo)
 	metrics := telemetry.NewMetrics(1000)
-	dataHandler := httpserver.NewDataHandler(queryService, metrics)
+	dataHandler := httpserver.NewDataHandler(queryService, metrics, jobsRepo, rabbitClient)
 
 	router := httpserver.NewRouter(cfg, logger, dataHandler, dsRepo, metrics, akRepo)
+
+	processor := data.NewJobProcessor(queryService, jobsRepo, metrics, logger)
+	if err := rabbitClient.Consume(ctx, processor.Handle); err != nil {
+		logger.Fatal().Err(err).Msg("failed to start consumer")
+	}
+	logger.Info().Msg("async job consumer started")
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),

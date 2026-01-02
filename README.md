@@ -9,17 +9,19 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 - Docker e Docker Compose
 - MongoDB (para armazenar configurações de datasources)
 - Postgres acessível para o datasource configurado
+- RabbitMQ (fila para processamento assíncrono de queries)
 
 ## Configuração rápida
 1. Opcional: copie `.env.example` para `.env` e ajuste variáveis (porta, log, URIs).
 2. Suba os serviços com Docker Compose:
 
    ```sh
-   docker-compose up -d
+  docker-compose up -d
    ```
 
-   - Sobe MongoDB e a API em `localhost:8080`.
-   - Mongo é iniciado com usuário `admin/admin123` e banco `api_database_config`.
+  - Sobe MongoDB, RabbitMQ e a API em `localhost:8080`.
+  - Mongo é iniciado com usuário `admin/admin123` e banco `api_database_config`.
+  - RabbitMQ expõe `5672` (AMQP) e `15672` (console de gestão).
 
 3. Cadastre um datasource na coleção `data_sources` do Mongo (no banco `api_database_config`). Exemplo para Postgres na máquina host:
 
@@ -66,7 +68,10 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 - `GET /health` — checagem simples.
 - `GET /metrics` — métricas agregadas de queries (JSON).
 - `GET /datasources` — lista datasources configurados.
-- `POST /data/{source}/{table}` — executa SELECT com filtros e ordenação.
+- `POST /data/{source}/{table}` — executa SELECT com filtros e ordenação (modo síncrono legado).
+- `POST /queries/{source}/{table}` — executa SELECT; suporta `?async=true` para enfileirar no RabbitMQ.
+- `GET /queries/{jobId}` — retorna status de um job assíncrono.
+- `GET /queries/hash/{payloadHash}` — retorna histórico de jobs para o mesmo payload (hash do corpo da requisição).
 
 ### Corpo da requisição
 ```json
@@ -85,7 +90,7 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 }
 ```
 
-### Resposta de exemplo
+### Resposta de exemplo (síncrona)
 ```json
 {
   "data": [
@@ -100,12 +105,30 @@ API HTTP simples que expõe consultas read-only em Postgres a partir de configur
 }
 ```
 
+### Resposta de exemplo (assíncrona)
+```json
+{
+  "jobId": "548686bb-e0a8-4db1-93fe-900300a69338",
+  "status": "queued",
+  "payloadHash": "cc2b3491c326ab2c60cbcee53be009dc3fef856ec36121ee22be68b9527aaf10",
+  "message": "Job enqueued for async processing"
+}
+```
+
+### Consultando status do job
+```
+GET /queries/548686bb-e0a8-4db1-93fe-900300a69338
+GET /queries/hash/cc2b3491c326ab2c60cbcee53be009dc3fef856ec36121ee22be68b9527aaf10
+```
+
 ## Notas
 - Identificadores de tabela/coluna são validados (letras, números, underscore) e escapados para Postgres.
 - `limit` padrão é 100 e não passa de 500, ou do `maxRows` configurado no datasource.
 - Valores de UUID e `time` retornam formatados como string.
 - Colunas bloqueadas via `blockedColumns` no datasource são removidas da resposta e não podem ser usadas em filtros/ordenação.
 - Erros retornam JSON estruturado com `code`, `message` e `details` (opcional).
+- Processamento assíncrono usa RabbitMQ; jobs são persistidos no Mongo com `jobId`, `payloadHash`, `apiKey`, `status`, `rows`, `tookMs`, `createdAt`, `startedAt`, `finishedAt`.
+- O `payloadHash` é calculado com SHA-256 sobre o corpo da requisição normalizado; não armazenamos SQL.
 
 ## Testes
 ```sh

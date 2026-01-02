@@ -15,6 +15,7 @@ type Config struct {
 	Mongo      MongoConfig
 	Cache      CacheConfig
 	Thresholds ThresholdsConfig
+	RabbitMQ   RabbitMQConfig
 }
 
 // MongoConfig define onde ficam os metadados de fontes de dados.
@@ -27,6 +28,12 @@ type MongoConfig struct {
 type CacheConfig struct {
 	TTLSeconds int
 	MaxItems   int
+}
+
+// RabbitMQConfig define parâmetros de fila.
+type RabbitMQConfig struct {
+	URL        string
+	QueryQueue string
 }
 
 // ThresholdsConfig determina limites de tempo e custo para consultas.
@@ -45,6 +52,7 @@ func Load() Config {
 		Mongo:      loadMongo(),
 		Cache:      loadCache(),
 		Thresholds: loadThresholds(),
+		RabbitMQ:   loadRabbitMQ(),
 	}
 }
 
@@ -66,6 +74,13 @@ func loadThresholds() ThresholdsConfig {
 	return ThresholdsConfig{
 		QueryTimeoutMs:   intFromEnv("QUERY_TIMEOUT_MS", 4000),
 		AsyncSwitchP95Ms: intFromEnv("ASYNC_SWITCH_P95_MS", 3500),
+	}
+}
+
+func loadRabbitMQ() RabbitMQConfig {
+	return RabbitMQConfig{
+		URL:        getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
+		QueryQueue: getEnv("RABBITMQ_QUEUE_QUERIES", "query_jobs"),
 	}
 }
 

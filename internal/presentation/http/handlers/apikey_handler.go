@@ -46,8 +46,8 @@ func (h *APIKeyHandler) ListKeys(w http.ResponseWriter, r *http.Request) {
 // CreateKey cria uma nova chave
 func (h *APIKeyHandler) CreateKey(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Name        string                `json:"name"`
-		Description string                `json:"description"`
+		Name        string              `json:"name"`
+		Description string              `json:"description"`
 		Permissions []apikey.Permission `json:"permissions"`
 	}
 
